@@ -5,6 +5,7 @@
 // 
 
 import UIKit
+import CoreData
 
 enum Section {
     case main
@@ -14,6 +15,15 @@ final class DiaryListViewController: UIViewController {
     
     // MARK: - Properties
 
+    
+    var fetchResultsController: NSFetchedResultsController<Diary>!
+
+    let viewContext: NSManagedObjectContext = {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        
+        return appDelegate.persistentContainer.viewContext
+    }()
+    
     private let diaryView = DiaryListView()
     private var dataSource: UITableViewDiffableDataSource<Section, DiarySampleData>?
     private var diarySampleData: [DiarySampleData]?
@@ -142,6 +152,29 @@ final class DiaryListViewController: UIViewController {
     private func configureDelgate() {
         diaryView.tableView.delegate = self
     }
+    
+    func loadSavedData() {
+        if fetchResultsController == nil {
+            let request = NSFetchRequest<Diary>(entityName: "Diary")
+            let sort = NSSortDescriptor(key: "createdAt", ascending: false)
+            request.sortDescriptors = [sort]
+            request.fetchBatchSize = 20
+            
+            fetchResultsController = NSFetchedResultsController(
+                fetchRequest: request,
+                managedObjectContext: viewContext,
+                sectionNameKeyPath: nil,
+                cacheName: nil)
+            fetchResultsController.delegate = self
+        }
+        
+        do {
+            try fetchResultsController.performFetch()
+            diaryView.tableView.reloadData()
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
 }
 
 // MARK: - UITableViewDelegate
@@ -153,4 +186,8 @@ extension DiaryListViewController: UITableViewDelegate {
             animated: true
         )
     }
+}
+
+extension DiaryListViewController: NSFetchedResultsControllerDelegate {
+
 }
