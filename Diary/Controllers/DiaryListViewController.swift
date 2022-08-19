@@ -25,8 +25,8 @@ final class DiaryListViewController: UIViewController {
     }()
     
     private let diaryView = DiaryListView()
-    private var dataSource: UITableViewDiffableDataSource<Section, DiarySampleData>?
-    private var diarySampleData: [DiarySampleData]?
+    private var dataSource: UITableViewDiffableDataSource<Section, DiaryData>?
+    private var diaryData: [DiaryData]?
     
     // MARK: - Life Cycle
     
@@ -38,7 +38,8 @@ final class DiaryListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        parseDiaryData()
+        loadSavedData()
+//        parseDiaryData()
         configureNavigationItems()
         registerTableView()
         configureDataSource()
@@ -47,35 +48,35 @@ final class DiaryListViewController: UIViewController {
     
     // MARK: - Methods
     
-    private func parseDiaryData() {
-        let parsedData: Result<[DiarySampleData], Error> = JSONData.parse(name: AssetData.sample)
-        switch parsedData {
-        case .success(let data):
-            diarySampleData = data
-        case .failure(let error):
-            presentErrorAlert(error)
-        }
-    }
+//    private func parseDiaryData() {
+//        let parsedData: Result<[DiarySampleData], Error> = JSONData.parse(name: AssetData.sample)
+//        switch parsedData {
+//        case .success(let data):
+//            diarySampleData = data
+//        case .failure(let error):
+//            presentErrorAlert(error)
+//        }
+//    }
     
-    private func presentErrorAlert(_ error: (Error)) {
-        let errorAlert = UIAlertController(
-            title: AlertMessage.errorAlertTitle,
-            message: error.localizedDescription,
-            preferredStyle: .alert
-        )
-        
-        let confirmAction = UIAlertAction(
-            title: AlertMessage.confirmActionTitle,
-            style: .default
-        )
-        
-        errorAlert.addAction(confirmAction)
-        
-        present(
-            errorAlert,
-            animated: true
-        )
-    }
+//    private func presentErrorAlert(_ error: (Error)) {
+//        let errorAlert = UIAlertController(
+//            title: AlertMessage.errorAlertTitle,
+//            message: error.localizedDescription,
+//            preferredStyle: .alert
+//        )
+//
+//        let confirmAction = UIAlertAction(
+//            title: AlertMessage.confirmActionTitle,
+//            style: .default
+//        )
+//
+//        errorAlert.addAction(confirmAction)
+//
+//        present(
+//            errorAlert,
+//            animated: true
+//        )
+//    }
     
     private func configureNavigationItems() {
         title = NavigationItem.diaryTitle
@@ -105,7 +106,9 @@ final class DiaryListViewController: UIViewController {
             DiaryListCell.self,
             forCellReuseIdentifier: DiaryListCell.identifier
         )
-        tableView.dataSource = dataSource
+//        tableView.dataSource = dataSource
+        // 현재 compositionalLayout이 아닌 flow Layout 방식으로하니 작동됨...
+        tableView.dataSource = self
     }
     
     private func configureDataSource() {
@@ -115,7 +118,7 @@ final class DiaryListViewController: UIViewController {
         
         let tableView = diaryView.tableView
         
-        dataSource = UITableViewDiffableDataSource<Section, DiarySampleData>(
+        dataSource = UITableViewDiffableDataSource<Section, DiaryData>(
             tableView: tableView,
             cellProvider: { tableView, indexPath, item in
                 guard let cell = tableView.dequeueReusableCell(
@@ -125,9 +128,15 @@ final class DiaryListViewController: UIViewController {
                     return nil
                 }
                 
-                cell.titleLabel.text = item.title
-                cell.dateLabel.text = item.createdAt.localizedString
-                cell.contentLabel.text = item.body
+//                cell.titleLabel.text = item.title
+//                cell.dateLabel.text = item.createdAt.localizedString
+//                cell.contentLabel.text = item.body
+//                cell.accessoryType = .disclosureIndicator
+                
+                let diary = self.fetchResultsController.object(at: indexPath)
+                cell.titleLabel.text = diary.title
+                cell.dateLabel.text = diary.createdAt
+                cell.contentLabel.text = diary.body
                 cell.accessoryType = .disclosureIndicator
                 
                 return cell
@@ -137,12 +146,12 @@ final class DiaryListViewController: UIViewController {
         dataSource?.apply(snapshot)
     }
     
-    private func configureSnapshot() -> NSDiffableDataSourceSnapshot<Section, DiarySampleData>? {
-        guard let diarySampleData = diarySampleData else {
+    private func configureSnapshot() -> NSDiffableDataSourceSnapshot<Section, DiaryData>? {
+        guard let diarySampleData = diaryData else {
             return nil
         }
         
-        var snapshot = NSDiffableDataSourceSnapshot<Section, DiarySampleData>()
+        var snapshot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
         snapshot.appendSections([.main])
         snapshot.appendItems(diarySampleData)
         
@@ -185,9 +194,80 @@ extension DiaryListViewController: UITableViewDelegate {
             at: indexPath,
             animated: true
         )
+        
+        let diary = fetchResultsController.object(at: indexPath)
+        
+        let nextVC = DiaryContentsViewController()
+        nextVC.diary = diary
+        nextVC.diaryView = diaryView
+        
+        nextVC.delegate = self
+        
+        navigationController?.pushViewController(nextVC, animated: true)
     }
 }
 
 extension DiaryListViewController: NSFetchedResultsControllerDelegate {
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        diaryView.tableView.beginUpdates()
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            diaryView.tableView.insertRows(at: [newIndexPath!], with: .fade)
+        case .delete:
+            diaryView.tableView.deleteRows(at: [indexPath!], with: .fade)
+        case .move:
+            diaryView.tableView.moveRow(at: indexPath!, to: newIndexPath!)
+        case .update:
+            diaryView.tableView.reloadRows(at: [indexPath!], with: .fade)
+        @unknown default:
+            break
+        }
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        diaryView.tableView.endUpdates()
+    }
+}
 
+extension DiaryListViewController: SendUpdateProtocol {
+    func sendUpdated() {
+        click()
+    }
+    
+    @objc private func click() {
+          do {
+              try fetchResultsController.performFetch()
+
+              diaryView.tableView.reloadData()
+          }
+          catch let err{
+              print(err.localizedDescription)
+          }
+        }
+}
+
+extension DiaryListViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+            let sectionInfo = fetchResultsController.sections![section]
+            return sectionInfo.numberOfObjects
+        }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: DiaryListCell.identifier, for: indexPath) as? DiaryListCell else {
+            return UITableViewCell()
+        }
+
+        let diary = self.fetchResultsController.object(at: indexPath)
+        cell.titleLabel.text = diary.title
+        cell.dateLabel.text = diary.createdAt
+        cell.contentLabel.text = diary.body
+        cell.accessoryType = .disclosureIndicator
+        
+        return cell
+    }
+    
+    
 }

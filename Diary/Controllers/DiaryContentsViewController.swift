@@ -6,10 +6,15 @@
 //
 
 import UIKit
+import CoreData
 
 final class DiaryContentsViewController: UIViewController {
     
     // MARK: - Properties
+    
+    var diary: Diary?
+    var diaryView: DiaryListView?
+    var delegate: SendUpdateProtocol?
     
     private let diaryContentView = DiaryContentView()
     
@@ -25,6 +30,16 @@ final class DiaryContentsViewController: UIViewController {
 
         title = Date().localizedString
         configureNotificationCenter()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        let newDiaryData = DiaryData(
+            title: "제목",
+            body: diaryContentView.textView.text,
+            createdAt: Date().localizedString ?? "")
+        CoreDataManager().saveDiary(data: newDiaryData)
     }
     
     // MARK: - Methods
@@ -62,3 +77,24 @@ final class DiaryContentsViewController: UIViewController {
         diaryContentView.textView.scrollIndicatorInsets = contentInset
     }
 }
+
+extension DiaryContentsViewController: NSFetchedResultsControllerDelegate {
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        if type == .insert {
+            //BlockOperation은 비동기적인 작업이기 때문에 이렇게 넣어주고
+            DispatchQueue.main.async {
+//                chatcollectionView.insertItems(at: [newIndexPath!])
+                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
+            }
+            
+            delegate?.sendUpdated()
+            
+        }
+    }
+}
+
+protocol SendUpdateProtocol: AnyObject {
+    func sendUpdated()
+}
+
+
