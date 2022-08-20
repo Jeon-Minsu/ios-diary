@@ -38,7 +38,7 @@ final class DiaryContentsViewController: UIViewController {
         let newDiaryData = DiaryData(
             title: "제목",
             body: diaryContentView.textView.text,
-            createdAt: Date().localizedString ?? "")
+            createdAt: Date())
         CoreDataManager().saveDiary(data: newDiaryData)
     }
     
@@ -81,10 +81,19 @@ final class DiaryContentsViewController: UIViewController {
 extension DiaryContentsViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         if type == .insert {
-            //BlockOperation은 비동기적인 작업이기 때문에 이렇게 넣어주고
             DispatchQueue.main.async {
 //                chatcollectionView.insertItems(at: [newIndexPath!])
-                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
+//                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
+                
+                guard let newDiaryData = anObject as? Diary else {
+                    return
+                }
+                
+                let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
+                
+                
+                snapShot.appendItems([diary])
+                dataSource?.apply(snapShot)
             }
             
             delegate?.sendUpdated()

@@ -49,6 +49,12 @@ final class DiaryListViewController: UIViewController {
         
     }
     
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        
+//        diaryView.tableView.reloadData()
+//    }
+    
     // MARK: - Methods
     
     private func configureNavigationItems() {
@@ -106,7 +112,7 @@ final class DiaryListViewController: UIViewController {
                 
                 let diary = self.fetchResultsController.object(at: indexPath)
                 cell.titleLabel.text = diary.title
-                cell.dateLabel.text = diary.createdAt
+                cell.dateLabel.text = diary.createdAt?.localizedString
                 cell.contentLabel.text = diary.body
                 cell.accessoryType = .disclosureIndicator
                 
@@ -245,7 +251,7 @@ extension DiaryListViewController: UITableViewDataSource {
 
         let diary = self.fetchResultsController.object(at: indexPath)
         cell.titleLabel.text = diary.title
-        cell.dateLabel.text = diary.createdAt
+        cell.dateLabel.text = diary.createdAt?.localizedString
         cell.contentLabel.text = diary.body
         cell.accessoryType = .disclosureIndicator
         

@@ -105,6 +105,6 @@ class CoreDataManager {
 struct DiaryData: Hashable {
     let title: String
     let body: String
-    let createdAt: String
+    let createdAt: Date
 }
 
