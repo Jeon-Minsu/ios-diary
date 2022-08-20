@@ -81,8 +81,12 @@ final class DiaryListViewController: UIViewController {
     }
     
     private func moveToDiaryContentsViewController() {
+        let nextVC = DiaryContentsViewController()
+
+        nextVC.isEditingMemo = false
+
         navigationController?.pushViewController(
-            DiaryContentsViewController(),
+            nextVC,
             animated: true
         )
     }
@@ -184,9 +188,11 @@ extension DiaryListViewController: UITableViewDelegate {
         
         let diary = fetchResultsController.object(at: indexPath)
         
+        
         let nextVC = DiaryContentsViewController()
         nextVC.diary = diary
         nextVC.diaryView = diaryView
+        nextVC.isEditingMemo = true
         
         nextVC.delegate = self
         
@@ -228,7 +234,8 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
             diaryView.tableView.moveRow(at: indexPath!, to: newIndexPath!)
         case .update:
 //            diaryView.tableView.reloadRows(at: [indexPath!], with: .fade)
-            break
+            snapShot.reloadSections([.main])
+            dataSource?.apply(snapShot)
         @unknown default:
             break
         }

@@ -12,6 +12,7 @@ final class DiaryContentsViewController: UIViewController {
     
     // MARK: - Properties
     
+    var isEditingMemo: Bool = false
     var diary: Diary?
     var diaryView: DiaryListView?
     var delegate: SendUpdateProtocol?
@@ -73,7 +74,16 @@ final class DiaryContentsViewController: UIViewController {
             body: body,
             createdAt: Date())
         
-        CoreDataManager().saveDiary(data: newDiaryData)
+        
+        if isEditingMemo {
+            CoreDataManager.shared.update(title: title, body: body, createdAt: diary!.createdAt!)
+        } else {
+            CoreDataManager.shared.saveDiary(data: newDiaryData)
+        }
+        
+        
+        
+        
     }
     
     // MARK: - Methods

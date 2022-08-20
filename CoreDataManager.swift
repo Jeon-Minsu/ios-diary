@@ -9,6 +9,12 @@ import UIKit
 import CoreData
 
 class CoreDataManager {
+    static let shared = CoreDataManager()
+    
+    private init() {
+        
+    }
+    
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     
     let persistentContainer: NSPersistentContainer = {
@@ -100,18 +106,18 @@ class CoreDataManager {
         }
     }
     
-    func update(data: Diary) {
+    func update(title: String, body: String, createdAt: Date) {
         
         let request = NSFetchRequest<Diary>(entityName: "Diary")
-        request.predicate = NSPredicate(format: "createdAt = %@", data.createdAt! as NSDate)
+        request.predicate = NSPredicate(format: "createdAt = %@", createdAt as NSDate)
         
         do {
             guard let fetchedData = try persistentContainer.viewContext.fetch(request).first else {
                 return
             }
             
-            fetchedData.title = data.title
-            fetchedData.body = data.body
+            fetchedData.title = title
+            fetchedData.body = body
             
             appDelegate.saveContext()
             
