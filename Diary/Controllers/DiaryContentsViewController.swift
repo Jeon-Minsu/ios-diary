@@ -29,6 +29,7 @@ final class DiaryContentsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        configureNavigationItems()
         configureNotificationCenter()
 //        diaryContentView.textView.delegate = self
     }
@@ -87,6 +88,24 @@ final class DiaryContentsViewController: UIViewController {
     }
     
     // MARK: - Methods
+    
+    private func configureNavigationItems() {
+        title = NavigationItem.diaryTitle
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: SystemImage.ellipsisCircle),
+            style: .plain,
+            target: self,
+            action: #selector(sharedButtonTapped)
+        )
+    }
+    
+    @objc private func sharedButtonTapped() {
+        let activity = UIActivityItemSource
+        
+        let activityViewController = UIActivityViewController(activityItems: [diaryContentView.textView.text!], applicationActivities: nil)
+        present(activityViewController, animated: true)
+    }
     
     private func configureUI() {
 
