@@ -111,8 +111,18 @@ final class DiaryContentsViewController: UIViewController {
         
         let deleteAction = UIAlertAction(title: "Delete",
                                          style: .destructive) { _ in
-            self.navigationController?.popViewController(animated: true)
-            CoreDataManager.shared.delete(self.diary!)
+            
+            let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
+            let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+            let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
+                self.navigationController?.popViewController(animated: true)
+                CoreDataManager.shared.delete(self.diary!)
+            }
+            
+            alert.addAction(cancelAction)
+            alert.addAction(deleteAction)
+            
+            self.present(alert, animated: true)
         }
         
         let cancelAction = UIAlertAction(title: "Cancel",
@@ -139,7 +149,7 @@ final class DiaryContentsViewController: UIViewController {
             return
         }
         
-        diaryContentView.textView.text = "\(diaryTitle)\n \(diaryBody)"
+        diaryContentView.textView.text = "\(diaryTitle)\n\(diaryBody)"
     }
     
     private func configureNotificationCenter() {
