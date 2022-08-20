@@ -32,8 +32,8 @@ final class DiaryContentsViewController: UIViewController {
         configureNotificationCenter()
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
         
         let newDiaryData = DiaryData(
             title: "제목",

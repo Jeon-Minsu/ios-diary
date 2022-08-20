@@ -26,6 +26,7 @@ final class DiaryListViewController: UIViewController {
     
     private let diaryView = DiaryListView()
     private var dataSource: UITableViewDiffableDataSource<Section, DiaryData>?
+    private var snapShot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
     private var diaryData: [DiaryData]?
     
     // MARK: - Life Cycle
@@ -38,45 +39,17 @@ final class DiaryListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        configureDataSource()
         loadSavedData()
-//        parseDiaryData()
         configureNavigationItems()
         registerTableView()
-        configureDataSource()
+        
         configureDelgate()
+        
+        
     }
     
     // MARK: - Methods
-    
-//    private func parseDiaryData() {
-//        let parsedData: Result<[DiarySampleData], Error> = JSONData.parse(name: AssetData.sample)
-//        switch parsedData {
-//        case .success(let data):
-//            diarySampleData = data
-//        case .failure(let error):
-//            presentErrorAlert(error)
-//        }
-//    }
-    
-//    private func presentErrorAlert(_ error: (Error)) {
-//        let errorAlert = UIAlertController(
-//            title: AlertMessage.errorAlertTitle,
-//            message: error.localizedDescription,
-//            preferredStyle: .alert
-//        )
-//
-//        let confirmAction = UIAlertAction(
-//            title: AlertMessage.confirmActionTitle,
-//            style: .default
-//        )
-//
-//        errorAlert.addAction(confirmAction)
-//
-//        present(
-//            errorAlert,
-//            animated: true
-//        )
-//    }
     
     private func configureNavigationItems() {
         title = NavigationItem.diaryTitle
@@ -106,15 +79,13 @@ final class DiaryListViewController: UIViewController {
             DiaryListCell.self,
             forCellReuseIdentifier: DiaryListCell.identifier
         )
-//        tableView.dataSource = dataSource
+        tableView.dataSource = dataSource
         // 현재 compositionalLayout이 아닌 flow Layout 방식으로하니 작동됨...
-        tableView.dataSource = self
+//        tableView.dataSource = self
     }
     
     private func configureDataSource() {
-        guard let snapshot = configureSnapshot() else {
-            return
-        }
+        configureSnapshot()
         
         let tableView = diaryView.tableView
         
@@ -142,20 +113,10 @@ final class DiaryListViewController: UIViewController {
                 return cell
             }
         )
-        
-        dataSource?.apply(snapshot)
     }
     
-    private func configureSnapshot() -> NSDiffableDataSourceSnapshot<Section, DiaryData>? {
-        guard let diarySampleData = diaryData else {
-            return nil
-        }
-        
-        var snapshot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(diarySampleData)
-        
-        return snapshot
+    private func configureSnapshot() {
+        snapShot.appendSections([.main])
     }
     
     private func configureDelgate() {
@@ -179,6 +140,18 @@ final class DiaryListViewController: UIViewController {
         
         do {
             try fetchResultsController.performFetch()
+            
+            guard let diary = fetchResultsController.sections?[0].objects as? [Diary] else {
+                return
+            }
+            
+            let convertedDiary = diary.map { diary in
+                DiaryData(title: diary.title!, body: diary.body!, createdAt: diary.createdAt!)
+            }
+            
+            snapShot.appendItems(convertedDiary)
+            dataSource?.apply(snapShot)
+            
             diaryView.tableView.reloadData()
         } catch {
             print(error.localizedDescription)
@@ -215,7 +188,17 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         switch type {
         case .insert:
-            diaryView.tableView.insertRows(at: [newIndexPath!], with: .fade)
+//            diaryView.tableView.insertRows(at: [newIndexPath!], with: .fade)
+            
+            guard let newDiaryData = anObject as? Diary else {
+                return
+            }
+            
+            let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
+            
+            
+            snapShot.appendItems([diary])
+            dataSource?.apply(snapShot)
         case .delete:
             diaryView.tableView.deleteRows(at: [indexPath!], with: .fade)
         case .move:
@@ -268,6 +251,4 @@ extension DiaryListViewController: UITableViewDataSource {
         
         return cell
     }
-    
-    
 }
