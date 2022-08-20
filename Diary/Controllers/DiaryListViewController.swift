@@ -64,6 +64,12 @@ final class DiaryListViewController: UIViewController {
 //        diaryView.tableView.reloadData()
 //    }
     
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//
+//        dataSource?.apply(snapShot)
+//    }
+    
     // MARK: - Methods
     
     private func configureNavigationItems() {
@@ -206,39 +212,37 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
     }
     
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        
+        guard let newDiary = anObject as? Diary else {
+            return
+        }
+        let diaryData = DiaryData(title: newDiary.title!, body: newDiary.body!, createdAt: newDiary.createdAt!)
+        
         switch type {
         case .insert:
-            
-            guard let newDiaryData = anObject as? Diary else {
-                return
-            }
-            
-            let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
-            
-            
+                
             if snapShot.numberOfItems == .zero {
-                snapShot.appendItems([diary])
+                snapShot.appendItems([diaryData])
             } else {
                 let 새로운인덱스 = IndexPath(row: newIndexPath!.row + 1, section: 0)
                 let lastObject = self.fetchResultsController.object(at: 새로운인덱스)
                 let lastDiaryData = DiaryData(title: lastObject.title!, body: lastObject.body!, createdAt: lastObject.createdAt!)
                 
-                snapShot.insertItems([diary], beforeItem: lastDiaryData)
+                snapShot.insertItems([diaryData], beforeItem: lastDiaryData)
             }
             
-            dataSource?.apply(snapShot)
-            
         case .delete:
-            diaryView.tableView.deleteRows(at: [indexPath!], with: .fade)
+            snapShot.deleteItems([diaryData])
+            snapShot.reloadSections([.main])
         case .move:
             diaryView.tableView.moveRow(at: indexPath!, to: newIndexPath!)
         case .update:
-//            diaryView.tableView.reloadRows(at: [indexPath!], with: .fade)
             snapShot.reloadSections([.main])
-            dataSource?.apply(snapShot)
         @unknown default:
             break
         }
+        
+        dataSource?.apply(snapShot)
     }
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
@@ -282,4 +286,23 @@ extension DiaryListViewController: UITableViewDataSource {
         
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completion in
+            print("딜리트")
+            completion(true)
+        }
+        let shareAction = UIContextualAction(style: .normal, title: "Share") { action, view, completion in
+            print("쉐어")
+            completion(true)
+        }
+        
+        deleteAction.image = UIImage(systemName: "trash.fill")
+        shareAction.backgroundColor = .systemBlue
+        shareAction.image = UIImage(systemName: "square.and.arrow.up")
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction, shareAction])
+    }
 }
+

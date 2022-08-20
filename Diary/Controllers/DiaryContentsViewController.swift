@@ -68,21 +68,17 @@ final class DiaryContentsViewController: UIViewController {
             
             let bodyRange = NSMakeRange(firstLineBreakIndexInt + 1, fullText.count - title.count - 1)
             body = (fullText as NSString).substring(with: bodyRange)
-        } 
-        
-        let newDiaryData = DiaryData(
-            title: title,
-            body: body,
-            createdAt: Date())
-        
-        
-        if isEditingMemo {
-            CoreDataManager.shared.update(title: title, body: body, createdAt: diary!.createdAt!)
-        } else {
-            CoreDataManager.shared.saveDiary(data: newDiaryData)
         }
         
         
+        if isEditingMemo {
+            guard let createdAt = diary?.createdAt else {
+                return
+            }
+            CoreDataManager.shared.update(title: title, body: body, createdAt: createdAt)
+        } else {
+            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: Date())
+        }
         
         
     }
@@ -101,10 +97,34 @@ final class DiaryContentsViewController: UIViewController {
     }
     
     @objc private func sharedButtonTapped() {
-        let activity = UIActivityItemSource
+        let actionSheet = UIAlertController(title: nil,
+                                            message: nil,
+                                            preferredStyle: .actionSheet)
         
-        let activityViewController = UIActivityViewController(activityItems: [diaryContentView.textView.text!], applicationActivities: nil)
-        present(activityViewController, animated: true)
+        let shareAction = UIAlertAction(title: "Share...",
+                                        style: .default) { _ in
+            
+            let items = [UIImage(systemName: "pencil") as Any, self.diaryContentView.textView.text!]
+            let activityViewController = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            self.present(activityViewController, animated: true)
+        }
+        
+        let deleteAction = UIAlertAction(title: "Delete",
+                                         style: .destructive) { _ in
+            self.navigationController?.popViewController(animated: true)
+            CoreDataManager.shared.delete(self.diary!)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel",
+                                         style: .cancel)
+        
+        actionSheet.addAction(shareAction)
+        actionSheet.addAction(deleteAction)
+        actionSheet.addAction(cancelAction)
+        
+        present(actionSheet,
+                animated: true,
+                completion: nil)
     }
     
     private func configureUI() {

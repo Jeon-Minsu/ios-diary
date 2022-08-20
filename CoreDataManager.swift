@@ -38,6 +38,21 @@ class CoreDataManager {
         }
     }
     
+    func saveDiary(title: String, body: String, createdAt: Date) {
+        let diary = Diary(context: persistentContainer.viewContext)
+        
+        diary.setValue(title, forKey: "title")
+        diary.setValue(body, forKey: "body")
+        diary.setValue(createdAt, forKey: "createdAt")
+        
+        do {
+            try persistentContainer.viewContext.save()
+            appDelegate.saveContext()
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
     func fetch() -> [Diary] {
         guard let contact  = try? persistentContainer.viewContext.fetch(Diary.fetchRequest()) as? [Diary] else {
             return []
@@ -87,7 +102,7 @@ class CoreDataManager {
         }
     }
     
-    func delete(_ diary: Diary, completion: @escaping () -> Void) {
+    func delete(_ diary: Diary) {
         let fetchRequest: NSFetchRequest<Diary> = NSFetchRequest(entityName: "Diary")
         fetchRequest.predicate = NSPredicate(format: "title == %@", diary.title ?? "")
         
@@ -100,9 +115,8 @@ class CoreDataManager {
         
         do {
             try persistentContainer.viewContext.save()
-            completion()
         } catch {
-            fatalError()
+            print(error)
         }
     }
     
