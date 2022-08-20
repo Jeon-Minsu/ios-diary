@@ -78,29 +78,29 @@ final class DiaryContentsViewController: UIViewController {
     }
 }
 
-extension DiaryContentsViewController: NSFetchedResultsControllerDelegate {
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-        if type == .insert {
-            DispatchQueue.main.async {
-//                chatcollectionView.insertItems(at: [newIndexPath!])
-//                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
-                
-                guard let newDiaryData = anObject as? Diary else {
-                    return
-                }
-                
-                let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
-                
-                
-                snapShot.appendItems([diary])
-                dataSource?.apply(snapShot)
-            }
-            
-            delegate?.sendUpdated()
-            
-        }
-    }
-}
+//extension DiaryContentsViewController: NSFetchedResultsControllerDelegate {
+//    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+//        if type == .insert {
+//            DispatchQueue.main.async {
+////                chatcollectionView.insertItems(at: [newIndexPath!])
+////                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
+//
+//                guard let newDiaryData = anObject as? Diary else {
+//                    return
+//                }
+//
+//                let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
+//
+//
+////                snapShot.appendItems([diary])
+////                dataSource?.apply(snapShot)
+//            }
+//
+//            delegate?.sendUpdated()
+//
+//        }
+//    }
+//}
 
 protocol SendUpdateProtocol: AnyObject {
     func sendUpdated()

@@ -158,7 +158,6 @@ final class DiaryListViewController: UIViewController {
             snapShot.appendItems(convertedDiary)
             dataSource?.apply(snapShot)
             
-            diaryView.tableView.reloadData()
         } catch {
             print(error.localizedDescription)
         }
@@ -194,17 +193,27 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         switch type {
         case .insert:
-//            diaryView.tableView.insertRows(at: [newIndexPath!], with: .fade)
             
             guard let newDiaryData = anObject as? Diary else {
                 return
             }
             
+            
             let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
             
             
-            snapShot.appendItems([diary])
+            if snapShot.numberOfItems == .zero {
+                snapShot.appendItems([diary])
+            } else {
+                let 새로운인덱스 = IndexPath(row: newIndexPath!.row + 1, section: 0)
+                let lastObject = self.fetchResultsController.object(at: 새로운인덱스)
+                let lastDiaryData = DiaryData(title: lastObject.title!, body: lastObject.body!, createdAt: lastObject.createdAt!)
+                
+                snapShot.insertItems([diary], beforeItem: lastDiaryData)
+            }
+            
             dataSource?.apply(snapShot)
+            
         case .delete:
             diaryView.tableView.deleteRows(at: [indexPath!], with: .fade)
         case .move:
