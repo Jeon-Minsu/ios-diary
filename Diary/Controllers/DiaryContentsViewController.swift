@@ -51,9 +51,26 @@ final class DiaryContentsViewController: UIViewController {
             return
         }
         
+        
+        
+        let fullText = diaryContentView.textView.text ?? ""
+        
+        var title: String = fullText
+        var body: String = ""
+        
+        if fullText.contains("\n") {
+            let lineBreakIndex = fullText.firstIndex(of: "\n")
+            let firstLineBreakIndexInt = lineBreakIndex!.utf16Offset(in: fullText)
+            let titleRange = NSMakeRange(0, firstLineBreakIndexInt)
+            title = (fullText as NSString).substring(with: titleRange)
+            
+            let bodyRange = NSMakeRange(firstLineBreakIndexInt + 1, fullText.count - title.count - 1)
+            body = (fullText as NSString).substring(with: bodyRange)
+        } 
+        
         let newDiaryData = DiaryData(
-            title: "제목",
-            body: diaryContentView.textView.text,
+            title: title,
+            body: body,
             createdAt: Date())
         CoreDataManager().saveDiary(data: newDiaryData)
     }

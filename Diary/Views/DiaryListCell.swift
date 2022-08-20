@@ -27,14 +27,17 @@ final class DiaryListCell: UITableViewCell {
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.setContentCompressionResistancePriority(.required,
                                                       for: .horizontal)
+        label.setContentHuggingPriority(.required,
+                                        for: .horizontal)
         
         return label
     }()
     
-    let contentLabel: UILabel = {
+    let bodyLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.preferredFont(forTextStyle: .caption2)
+        label.textAlignment = .left
         
         return label
     }()
@@ -70,7 +73,7 @@ final class DiaryListCell: UITableViewCell {
         contentView.addSubview(stackView)
         
         stackView.addArrangedSubview(dateLabel)
-        stackView.addArrangedSubview(contentLabel)
+        stackView.addArrangedSubview(bodyLabel)
         
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor,

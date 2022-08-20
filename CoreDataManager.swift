@@ -40,19 +40,19 @@ class CoreDataManager {
         return contact
     }
     
-    func fetchDiary() {
-        do {
-            guard let diary = try persistentContainer.viewContext.fetch(Diary.fetchRequest()) as? [Diary] else {
-                return
-            }
-            
-            diary.forEach {
-                print($0.title)
-            }
-        } catch {
-            print(error.localizedDescription)
-        }
-    }
+//    func fetchDiary() {
+//        do {
+//            guard let diary = try persistentContainer.viewContext.fetch(Diary.fetchRequest()) as? [Diary] else {
+//                return
+//            }
+//            
+//            diary.forEach {
+//                print($0.title)
+//            }
+//        } catch {
+//            print(error.localizedDescription)
+//        }
+//    }
     
 //    let request: NSFetchRequest<Contact> = Contact.
 //    let fetchResult = PersistenceManager.shared.fetch(request: request) // [Contact]

@@ -111,7 +111,7 @@ final class DiaryListViewController: UIViewController {
                 let diary = self.fetchResultsController.object(at: indexPath)
                 cell.titleLabel.text = diary.title
                 cell.dateLabel.text = diary.createdAt?.localizedString
-                cell.contentLabel.text = diary.body
+                cell.bodyLabel.text = diary.body
                 cell.accessoryType = .disclosureIndicator
                 
                 return cell
@@ -258,7 +258,7 @@ extension DiaryListViewController: UITableViewDataSource {
         let diary = self.fetchResultsController.object(at: indexPath)
         cell.titleLabel.text = diary.title
         cell.dateLabel.text = diary.createdAt?.localizedString
-        cell.contentLabel.text = diary.body
+        cell.bodyLabel.text = diary.body
         cell.accessoryType = .disclosureIndicator
         
         return cell
