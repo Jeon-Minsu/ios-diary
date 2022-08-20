@@ -72,6 +72,7 @@ final class DiaryContentsViewController: UIViewController {
             title: title,
             body: body,
             createdAt: Date())
+        
         CoreDataManager().saveDiary(data: newDiaryData)
     }
     

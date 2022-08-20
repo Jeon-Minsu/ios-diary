@@ -45,7 +45,7 @@ class CoreDataManager {
 //            guard let diary = try persistentContainer.viewContext.fetch(Diary.fetchRequest()) as? [Diary] else {
 //                return
 //            }
-//            
+//
 //            diary.forEach {
 //                print($0.title)
 //            }
@@ -82,11 +82,11 @@ class CoreDataManager {
     }
     
     func delete(_ diary: Diary, completion: @escaping () -> Void) {
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "Diary")
+        let fetchRequest: NSFetchRequest<Diary> = NSFetchRequest(entityName: "Diary")
         fetchRequest.predicate = NSPredicate(format: "title == %@", diary.title ?? "")
         
         do {
-            guard let diary = try persistentContainer.viewContext.fetch(fetchRequest).last as? NSManagedObject else { return }
+            guard let diary = try persistentContainer.viewContext.fetch(fetchRequest).last else { return }
             persistentContainer.viewContext.delete(diary)
         } catch {
             fatalError()
@@ -97,6 +97,26 @@ class CoreDataManager {
             completion()
         } catch {
             fatalError()
+        }
+    }
+    
+    func update(data: Diary) {
+        
+        let request = NSFetchRequest<Diary>(entityName: "Diary")
+        request.predicate = NSPredicate(format: "createdAt = %@", data.createdAt! as NSDate)
+        
+        do {
+            guard let fetchedData = try persistentContainer.viewContext.fetch(request).first else {
+                return
+            }
+            
+            fetchedData.title = data.title
+            fetchedData.body = data.body
+            
+            appDelegate.saveContext()
+            
+        } catch {
+            print(error)
         }
     }
 

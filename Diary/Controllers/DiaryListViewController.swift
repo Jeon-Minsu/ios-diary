@@ -45,6 +45,17 @@ final class DiaryListViewController: UIViewController {
         registerTableView()
         
         configureDelgate()
+        
+//        guard let diary = fetchResultsController.sections?[0].objects as? [Diary] else {
+//            return
+//        }
+//        
+//        diary.forEach {
+//            print($0.createdAt)
+//        }
+//        
+//        CoreDataManager().update(data: diary[1])
+        
     }
     
 //    override func viewWillAppear(_ animated: Bool) {
@@ -216,7 +227,8 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
         case .move:
             diaryView.tableView.moveRow(at: indexPath!, to: newIndexPath!)
         case .update:
-            diaryView.tableView.reloadRows(at: [indexPath!], with: .fade)
+//            diaryView.tableView.reloadRows(at: [indexPath!], with: .fade)
+            break
         @unknown default:
             break
         }
