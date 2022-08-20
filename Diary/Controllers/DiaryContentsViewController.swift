@@ -28,12 +28,28 @@ final class DiaryContentsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = Date().localizedString
         configureNotificationCenter()
+//        diaryContentView.textView.delegate = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        configureUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        diaryContentView.textView.becomeFirstResponder()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        
+        guard !diaryContentView.textView.text.isEmpty else {
+            return
+        }
         
         let newDiaryData = DiaryData(
             title: "제목",
@@ -43,6 +59,21 @@ final class DiaryContentsViewController: UIViewController {
     }
     
     // MARK: - Methods
+    
+    private func configureUI() {
+
+        title = diary?.createdAt == nil
+            ? Date().localizedString
+            : diary?.createdAt!.localizedString
+        
+        guard let diaryTitle = diary?.title,
+              let diaryBody = diary?.body else {
+            diaryContentView.textView.text = ""
+            return
+        }
+        
+        diaryContentView.textView.text = "\(diaryTitle)\n \(diaryBody)"
+    }
     
     private func configureNotificationCenter() {
         NotificationCenter.default.addObserver(self,
@@ -105,5 +136,37 @@ final class DiaryContentsViewController: UIViewController {
 protocol SendUpdateProtocol: AnyObject {
     func sendUpdated()
 }
-
-
+//
+//extension DiaryContentsViewController: UITextViewDelegate {
+////    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+////        print(text)
+////        return true
+////
+////        let heading = "Bills or Taxes once paid through the payment gateway shall not be refunded other then in the following circumstances:"
+////        let content = "\n \n 1. Multiple times debiting of Consumer Card/Bank Account due to ticnical error excluding Payment Gateway charges would be refunded to the consumer with in 1 week after submitting complaint form. \n \n 2. Consumers account being debited with excess amount in single transaction due to tecnical error will be deducted in next month transaction. \n \n 3. Due to technical error, payment being charged on the consumers Card/Bank Account but the Bill is unsuccessful."
+//
+////        let attributedText = NSMutableAttributedString(string: heading, attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 20)])
+////
+////        attributedText.append(NSAttributedString(string: content, attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 15), NSAttributedString.Key.foregroundColor: UIColor.blue]))
+////
+////        textView.attributedText = attributedText
+////    }
+//
+//    func textViewDidChange(_ textView: UITextView) {
+//        print(textView.text)
+//
+////        let firstEnterIndex = textView.text.firstIndex(of: "\n")
+////        let title = textView.text.
+//
+//
+//        let fullText = textView.text ?? ""
+//        let range = (fullText as NSString).range(of: "\n")
+//        print(range.description)
+//        let attributedString = NSMutableAttributedString(string: fullText)
+//        attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .title1), range: range)
+//        textView.attributedText = attributedString
+//
+//
+////        diaryContentView.textView.attributedText = attributedString
+//    }
+//}

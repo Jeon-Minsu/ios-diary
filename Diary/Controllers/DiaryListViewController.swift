@@ -45,8 +45,6 @@ final class DiaryListViewController: UIViewController {
         registerTableView()
         
         configureDelgate()
-        
-        
     }
     
 //    override func viewWillAppear(_ animated: Bool) {
@@ -197,7 +195,6 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
             guard let newDiaryData = anObject as? Diary else {
                 return
             }
-            
             
             let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
             

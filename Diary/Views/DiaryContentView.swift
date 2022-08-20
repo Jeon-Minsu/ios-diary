@@ -31,7 +31,7 @@ final class DiaryContentView: UIView {
     private func configureTextView() {
         textView = UITextView()
         
-        textView.font = UIFont.preferredFont(forTextStyle: .body)
+//        textView.font = UIFont.preferredFont(forTextStyle: .body)
         textView.keyboardDismissMode = .interactive
         textView.alwaysBounceVertical = true
         
