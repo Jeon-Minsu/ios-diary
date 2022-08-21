@@ -19,6 +19,8 @@ final class DiaryContentsViewController: UIViewController {
     
     private let diaryContentView = DiaryContentView()
     
+    var textViewCurrentSelectedTextRange: UITextRange?
+    
     // MARK: Life Cycle
     
     override func loadView() {
@@ -31,7 +33,7 @@ final class DiaryContentsViewController: UIViewController {
 
         configureNavigationItems()
         configureNotificationCenter()
-//        diaryContentView.textView.delegate = self
+        diaryContentView.textView.delegate = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -100,38 +102,38 @@ final class DiaryContentsViewController: UIViewController {
         let actionSheet = UIAlertController(title: nil,
                                             message: nil,
                                             preferredStyle: .actionSheet)
-        
+
         let shareAction = UIAlertAction(title: "Share...",
                                         style: .default) { _ in
-            
+
             let items = [UIImage(systemName: "pencil") as Any, self.diaryContentView.textView.text!]
             let activityViewController = UIActivityViewController(activityItems: items, applicationActivities: nil)
             self.present(activityViewController, animated: true)
         }
-        
+
         let deleteAction = UIAlertAction(title: "Delete",
                                          style: .destructive) { _ in
-            
+
             let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
             let cancelAction = UIAlertAction(title: "취소", style: .cancel)
             let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
                 self.navigationController?.popViewController(animated: true)
                 CoreDataManager.shared.delete(self.diary!)
             }
-            
+
             alert.addAction(cancelAction)
             alert.addAction(deleteAction)
-            
+
             self.present(alert, animated: true)
         }
-        
+
         let cancelAction = UIAlertAction(title: "Cancel",
                                          style: .cancel)
-        
+
         actionSheet.addAction(shareAction)
         actionSheet.addAction(deleteAction)
         actionSheet.addAction(cancelAction)
-        
+
         present(actionSheet,
                 animated: true,
                 completion: nil)
@@ -213,37 +215,168 @@ final class DiaryContentsViewController: UIViewController {
 protocol SendUpdateProtocol: AnyObject {
     func sendUpdated()
 }
-//
-//extension DiaryContentsViewController: UITextViewDelegate {
-////    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-////        print(text)
-////        return true
-////
-////        let heading = "Bills or Taxes once paid through the payment gateway shall not be refunded other then in the following circumstances:"
-////        let content = "\n \n 1. Multiple times debiting of Consumer Card/Bank Account due to ticnical error excluding Payment Gateway charges would be refunded to the consumer with in 1 week after submitting complaint form. \n \n 2. Consumers account being debited with excess amount in single transaction due to tecnical error will be deducted in next month transaction. \n \n 3. Due to technical error, payment being charged on the consumers Card/Bank Account but the Bill is unsuccessful."
-//
-////        let attributedText = NSMutableAttributedString(string: heading, attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 20)])
-////
-////        attributedText.append(NSAttributedString(string: content, attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 15), NSAttributedString.Key.foregroundColor: UIColor.blue]))
-////
-////        textView.attributedText = attributedText
-////    }
-//
-//    func textViewDidChange(_ textView: UITextView) {
-//        print(textView.text)
-//
-////        let firstEnterIndex = textView.text.firstIndex(of: "\n")
-////        let title = textView.text.
-//
-//
-//        let fullText = textView.text ?? ""
-//        let range = (fullText as NSString).range(of: "\n")
-//        print(range.description)
-//        let attributedString = NSMutableAttributedString(string: fullText)
-//        attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .title1), range: range)
-//        textView.attributedText = attributedString
-//
-//
-////        diaryContentView.textView.attributedText = attributedString
-//    }
-//}
+
+extension DiaryContentsViewController: UITextViewDelegate {
+    
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        
+        print(#function)
+        
+        // 비교용 폰트
+        let title1Font = UIFont.preferredFont(forTextStyle: .title1)
+        let bodyFont = UIFont.preferredFont(forTextStyle: .body)
+        
+        // 현재 커서 (위치, 길이)
+        let cursorLocation = textView.selectedRange.location
+        let cursorLength = textView.selectedRange.length
+        
+        // 총 텍스트 길이
+        let textLength = textView.attributedText.length - 1
+        
+        // Text View의 텍스트, 커서 위치 가져오기
+        guard let textViewString = textView.text,
+              let selectedTextRange = textView.selectedTextRange else {
+            return true
+        }
+        
+        // 현재 커서 위치의 offset
+        let offset = textView.offset(from: textView.beginningOfDocument, to: selectedTextRange.start)
+        // offset(Int)값으로 String.Index 구하기
+        let cursorIndex = textViewString.index(textViewString.startIndex, offsetBy: offset)
+        
+        // 커서 위치로부터 왼쪽, 오른쪽의 모든 텍스트(String)
+        let cursorsLeftString = textViewString[textViewString.startIndex..<cursorIndex]
+        let cursorsRightString = textViewString[cursorIndex..<textViewString.endIndex]
+        // 커서 바로 오른쪽의 문자(Character)
+        let cursorsRightCharacter = cursorsRightString.first
+        
+        
+        
+        
+        // 백스페이스를 누른 경우
+        if text == "" {
+            print("location: \(cursorLocation), \(textView.selectedRange.length), length: \(textLength)")
+            
+            // 텍스트 길이가 현재 커서의 위치보다 큰 경우 (== 커서가 문자열 "안쪽"에 있음)
+            // 커서의 길이가 0인 경우 (== 범위가 아닌, 한 지점을 선택함)
+            // 커서 바로 오른쪽의 문자가 "\n"가 아닌 경우 (== 바로 다음이 개행문자가 아닌 일반적인 문자인 경우)
+            if textLength > cursorLocation && cursorLocation > 1 && cursorLength <= 0 && cursorsRightCharacter != "\n" {
+                
+                // 커서 왼쪽, 오른쪽 문자의 Font 가져오기
+                guard let cursorsLeftFont = textView.attributedText.attribute(.font, at: cursorLocation - 2, effectiveRange: nil) as? UIFont,
+                      let cursorsRightFont = textView.attributedText.attribute(.font, at: cursorLocation, effectiveRange: nil) as? UIFont else {
+                    return true
+                }
+                
+                // 폰트 사이즈가 다른 경우 (== 폰트가 다름)
+                if cursorsLeftFont.pointSize != cursorsRightFont.pointSize {
+                    
+                    print("좌우 다름!")
+                    
+                    // 현재의 커서 위치 저장
+                    self.textViewCurrentSelectedTextRange = textView.selectedTextRange
+
+                    // Title, Body 텍스트를 쌓을 문자열을 생성
+                    var titleText: String = ""
+                    var bodyText: String = ""
+
+                    // 텍스트 안에 있는 모든 attributedText를 돌아가면서 확인
+                    let allTextRange = NSRange(location: 0, length: textView.text.count)
+                    textView.attributedText.enumerateAttributes(in: allTextRange) { value, range, pointer in
+                        guard let font = value[.font] as? UIFont else { return }
+                        let text = textView.attributedText.attributedSubstring(from: range).string
+                        
+                        // 폰트사이즈가 Title인지 Body인지 구분
+                        switch font.pointSize {
+                        case title1Font.pointSize:
+                            titleText += text
+                        case bodyFont.pointSize:
+                            bodyText += text
+                        default:
+                            break
+                        }
+                    }
+                    
+                    // "\n" 를 기준으로 문자열 나누기
+                    var splitedBodyText = bodyText.split(separator: "\n")
+                    
+                    // body의 첫번째 줄을 잘라서 title의 뒷부분에 붙이기
+                    if let firstLineOfBodyText = splitedBodyText.first {
+                        titleText += firstLineOfBodyText
+                        splitedBodyText.removeFirst()
+                    }
+                    
+                    // 첫 번째줄을 없앤 body 문자열 다시 합치기
+                    let fixedBodyText = splitedBodyText.joined(separator: "\n")
+
+                    // 재 생성한 문자열로 Attributed String 재생성
+                    let attributedTitle = NSMutableAttributedString(string: titleText, attributes: [NSAttributedString.Key.font: title1Font])
+                    let attributedBody = NSMutableAttributedString(string: "\n" + fixedBodyText, attributes: [NSAttributedString.Key.font: bodyFont])
+
+                    let fixedAttributedText = NSMutableAttributedString()
+                    fixedAttributedText.append(attributedTitle)
+                    fixedAttributedText.append(attributedBody)
+                    
+                    // Text View에 적용
+                    textView.attributedText = NSAttributedString(attributedString: fixedAttributedText)
+
+                    // 중복 입력 방지
+                    return false
+                }
+            }
+        }
+
+        
+        
+        // "\n"(엔터)가 입력된 경우
+        if text == "\n" {
+            // Text View의 Attributed Text
+            let attributedText = textView.attributedText
+
+            // 텍스트 길이가 현재 커서의 위치보다 큰 경우 (== 커서가 문자열 "안쪽"에 있음)
+            // 커서의 길이가 0인 경우 (== 범위가 아닌, 한 지점을 선택함)
+            if textLength > cursorLocation && cursorLocation > 0 {
+                
+                // 커서 왼쪽, 오른쪽 문자의 Font 가져오기
+                guard let cursorsLeftFont = attributedText?.attribute(.font, at: cursorLocation - 1, effectiveRange: nil) as? UIFont,
+                      let cursorsRightFont = attributedText?.attribute(.font, at: cursorLocation, effectiveRange: nil) as? UIFont else {
+                    return true
+                }
+
+                // 폰트 사이즈가 다른 경우 (== 폰트가 다름)
+                if cursorsLeftFont.pointSize != cursorsRightFont.pointSize {
+                    // 커서 오른쪽에 있는 문자의 폰트를 그대로 적용
+                    textView.typingAttributes = [NSAttributedString.Key.font: cursorsRightFont]
+                }
+            
+            // 텍스트 길이가 현재 커서의 위치와 같은 경우 (== 커서가 문자열 "끝"에 있음)
+            } else {
+                // body 폰트로 적용
+                textView.typingAttributes = [NSAttributedString.Key.font: bodyFont]
+            }
+        }
+        
+        // 커서 왼쪽에 아무런 문자열도 없는 경우 (== 시작 위치에 있음)
+        if cursorsLeftString.replacingOccurrences(of: "\n", with: "").count <= 0 {
+            // Title 폰트로 적용
+            textView.typingAttributes = [NSAttributedString.Key.font: title1Font]
+        }
+        
+        return true
+    }
+    
+    
+    
+    func textViewDidChangeSelection(_ textView: UITextView) {
+        
+        // 백스페이스 눌러서 AttributedText가 재설정된 경우 커서 위치 원래 위치로 옮기기
+        // textViewSelectedRange 값이 있는 경우 (== 커서 위치가 조정됨)
+        if let textViewSelectedRange = textViewCurrentSelectedTextRange,
+           let newPosition = textView.position(from: textViewSelectedRange.start, offset: -1) {
+            
+            // 저장해놨던 위치로 커서를 옮기고, nil로 다시 설정
+            textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
+            self.textViewCurrentSelectedTextRange = nil
+        }
+    }
+}
