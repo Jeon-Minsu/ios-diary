@@ -150,19 +150,6 @@ final class DiaryContentsViewController: UIViewController {
 
         let shareAction = UIAlertAction(title: "Share...",
                                         style: .default) { [self] _ in
-
-
-//                //Generate the screenshot
-//            UIGraphicsBeginImageContext(self.view.frame.size)
-//            self.view.layer.render(in: UIGraphicsGetCurrentContext()!)
-//            let image = UIGraphicsGetImageFromCurrentImageContext()
-//            UIGraphicsEndImageContext()
-
-//            var postImage = UIImage(named: "\(image)")
-
-//            var postImage = UIImage(systemName: "circle")
-
-//            let imageUrl = URL(string: "https://pelicana.co.kr/resources/images/menu/original_menu02_200529.png?timestamp=1661163501635")
             
             let activityViewController = UIActivityViewController(activityItems: [self.diaryContentView.textView.text!], applicationActivities: nil)
             activityViewController.modalPresentationStyle = .formSheet
@@ -176,10 +163,6 @@ final class DiaryContentsViewController: UIViewController {
             let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
             let cancelAction = UIAlertAction(title: "취소", style: .cancel)
             let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
-//                guard let currentDate = self.currentDate else {
-//                    return
-//                }
-//                CoreDataManager.shared.delete(createdAt: currentDate)
                 self.isDeleted = true
                 self.navigationController?.popViewController(animated: true)
             }
