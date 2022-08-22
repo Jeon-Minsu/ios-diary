@@ -123,6 +123,10 @@ final class DiaryContentsViewController: UIViewController {
             return
         }
         
+        if isDeleted == true {
+            CoreDataManager.shared.delete(createdAt: currentDate!)
+        }
+        
         CoreDataManager.shared.update(title: title, body: body, createdAt: currentDate!)
     }
     
@@ -172,16 +176,11 @@ final class DiaryContentsViewController: UIViewController {
             let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
             let cancelAction = UIAlertAction(title: "취소", style: .cancel)
             let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
-                guard let currentDate = self.currentDate else {
-                    return
-                }
+//                guard let currentDate = self.currentDate else {
+//                    return
+//                }
 //                CoreDataManager.shared.delete(createdAt: currentDate)
                 self.isDeleted = true
-                guard let vc = navigationController?.topViewController as? DiaryListViewController else {
-                    return
-                }
-//                vc.isDeleted = true
-//                vc.asd = currentDate
                 self.navigationController?.popViewController(animated: true)
             }
 
