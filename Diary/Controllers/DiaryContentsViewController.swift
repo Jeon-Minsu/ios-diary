@@ -34,6 +34,42 @@ final class DiaryContentsViewController: UIViewController {
         configureNavigationItems()
         configureNotificationCenter()
         diaryContentView.textView.delegate = self
+        setObserver()
+    }
+    
+    private func setObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(resignActive), name: UIApplication.willResignActiveNotification, object: nil)
+    }
+    
+    @objc func resignActive() {
+        guard !diaryContentView.textView.text.isEmpty else {
+            return
+        }
+        
+        let fullText = diaryContentView.textView.text ?? ""
+        
+        var title: String = fullText
+        var body: String = ""
+        
+        if fullText.contains("\n") {
+            let lineBreakIndex = fullText.firstIndex(of: "\n")
+            let firstLineBreakIndexInt = lineBreakIndex!.utf16Offset(in: fullText)
+            let titleRange = NSMakeRange(0, firstLineBreakIndexInt)
+            title = (fullText as NSString).substring(with: titleRange)
+            
+            let bodyRange = NSMakeRange(firstLineBreakIndexInt + 1, fullText.count - title.count - 1)
+            body = (fullText as NSString).substring(with: bodyRange)
+        }
+        
+        
+        if isEditingMemo {
+            guard let createdAt = diary?.createdAt else {
+                return
+            }
+            CoreDataManager.shared.update(title: title, body: body, createdAt: createdAt)
+        } else {
+            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: Date())
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -151,7 +187,13 @@ final class DiaryContentsViewController: UIViewController {
             return
         }
         
-        diaryContentView.textView.text = "\(diaryTitle)\n\(diaryBody)"
+        let titleAttrString = NSMutableAttributedString(string: diaryTitle, attributes: [NSMutableAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .title1)])
+        let bodyAttrString = NSMutableAttributedString(string: "\n" + diaryBody, attributes: [NSMutableAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .body)])
+        
+        let attrText = NSMutableAttributedString()
+        attrText.append(titleAttrString)
+        attrText.append(bodyAttrString)
+        diaryContentView.textView.attributedText = attrText
     }
     
     private func configureNotificationCenter() {

@@ -35,8 +35,8 @@ final class DiaryContentView: UIView {
         textView.keyboardDismissMode = .interactive
         textView.alwaysBounceVertical = true
         textView.typingAttributes = [NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .title1)]
-        textView.allowsEditingTextAttributes = true
-        textView.usesStandardTextScaling = true
+//        textView.allowsEditingTextAttributes = true
+//        textView.usesStandardTextScaling = true
         
         addSubview(textView)
     }
