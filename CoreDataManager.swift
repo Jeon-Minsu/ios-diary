@@ -92,9 +92,11 @@ class CoreDataManager {
         }
     }
     
-    func delete(_ diary: Diary) {
+//    func delete(_ diary: Diary) {
+    func delete(createdAt: Date) {
         let fetchRequest: NSFetchRequest<Diary> = NSFetchRequest(entityName: "Diary")
-        fetchRequest.predicate = NSPredicate(format: "title == %@", diary.title ?? "")
+//        fetchRequest.predicate = NSPredicate(format: "title == %@", diary.title ?? "")
+        fetchRequest.predicate = NSPredicate(format: "createdAt = %@", createdAt as NSDate)
         
         do {
             guard let diary = try persistentContainer.viewContext.fetch(fetchRequest).last else { return }

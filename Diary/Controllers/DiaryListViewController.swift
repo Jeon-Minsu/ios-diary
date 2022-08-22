@@ -27,7 +27,9 @@ final class DiaryListViewController: UIViewController {
     private let diaryView = DiaryListView()
     private var dataSource: UITableViewDiffableDataSource<Section, DiaryData>?
     private var snapShot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
-    private var diaryData: [DiaryData]?
+    
+    var asd: Date = Date()
+    var isDeleted: Bool = false
     
     // MARK: - Life Cycle
     
@@ -58,11 +60,13 @@ final class DiaryListViewController: UIViewController {
         
     }
     
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        
-//        diaryView.tableView.reloadData()
-//    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if isDeleted {
+            CoreDataManager.shared.delete(createdAt: asd)
+        }
+    }
     
 //    override func viewWillAppear(_ animated: Bool) {
 //        super.viewWillAppear(animated)
@@ -233,7 +237,6 @@ extension DiaryListViewController: NSFetchedResultsControllerDelegate {
             
         case .delete:
             snapShot.deleteItems([diaryData])
-            snapShot.reloadSections([.main])
         case .move:
             diaryView.tableView.moveRow(at: indexPath!, to: newIndexPath!)
         case .update:
@@ -261,7 +264,7 @@ extension DiaryListViewController: SendUpdateProtocol {
 
               diaryView.tableView.reloadData()
           }
-          catch let err{
+          catch (let err) {
               print(err.localizedDescription)
           }
         }
@@ -289,12 +292,28 @@ extension DiaryListViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
+        guard let diaryData = self.dataSource?.itemIdentifier(for: indexPath) else {
+            return nil
+        }
+        
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completion in
-            print("딜리트")
-            completion(true)
+//            let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
+//            let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+//            let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
+//                self.navigationController?.popViewController(animated: true)
+                
+                CoreDataManager.shared.delete(createdAt: diaryData.createdAt)
+//            }
+
+//            alert.addAction(cancelAction)
+//            alert.addAction(deleteAction)
+//
+//            self.present(alert, animated: true)
+//            completion(true)
         }
         let shareAction = UIContextualAction(style: .normal, title: "Share") { action, view, completion in
-            print("쉐어")
+            let activityViewController = UIActivityViewController(activityItems: [diaryData.title+"\n"+diaryData.body], applicationActivities: nil)
+            self.present(activityViewController, animated: true)
             completion(true)
         }
         
@@ -302,7 +321,8 @@ extension DiaryListViewController: UITableViewDataSource {
         shareAction.backgroundColor = .systemBlue
         shareAction.image = UIImage(systemName: "square.and.arrow.up")
         
-        return UISwipeActionsConfiguration(actions: [deleteAction, shareAction])
+        let swipeActionCongifuration = UISwipeActionsConfiguration(actions: [deleteAction, shareAction])
+        swipeActionCongifuration.performsFirstActionWithFullSwipe = false
+        return swipeActionCongifuration
     }
 }
-

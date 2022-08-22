@@ -8,12 +8,15 @@
 import UIKit
 import CoreData
 
+
+
 final class DiaryContentsViewController: UIViewController {
     
     // MARK: - Properties
         
     var currentDate: Date?
     var isEditingMemo: Bool = false
+    var isDeleted: Bool = false
     var diary: Diary?
     var diaryView: DiaryListView?
     var delegate: SendUpdateProtocol?
@@ -114,13 +117,13 @@ final class DiaryContentsViewController: UIViewController {
         }
         
         guard let _ = CoreDataManager.shared.fetchDiary(createdAt: currentDate!) else {
-            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: currentDate!)
+            if isDeleted == false {
+                CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: currentDate!)
+            }
             return
         }
         
         CoreDataManager.shared.update(title: title, body: body, createdAt: currentDate!)
-        
-        
     }
     
     // MARK: - Methods
@@ -155,10 +158,11 @@ final class DiaryContentsViewController: UIViewController {
 
 //            var postImage = UIImage(systemName: "circle")
 
-            let button = UIButton()
-            button.setTitle("options", for: .normal)
+//            let imageUrl = URL(string: "https://pelicana.co.kr/resources/images/menu/original_menu02_200529.png?timestamp=1661163501635")
             
-            let activityViewController = UIActivityViewController(activityItems: [button, self.diaryContentView.textView.text], applicationActivities: nil)
+            let activityViewController = UIActivityViewController(activityItems: [self.diaryContentView.textView.text!], applicationActivities: nil)
+            activityViewController.modalPresentationStyle = .formSheet
+            activityViewController.navigationController?.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: nil)
             self.present(activityViewController, animated: true)
         }
 
@@ -168,8 +172,17 @@ final class DiaryContentsViewController: UIViewController {
             let alert = UIAlertController(title: "진짜요?", message: "정말로 삭제하시겠어요?", preferredStyle: .alert)
             let cancelAction = UIAlertAction(title: "취소", style: .cancel)
             let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
+                guard let currentDate = self.currentDate else {
+                    return
+                }
+//                CoreDataManager.shared.delete(createdAt: currentDate)
+                self.isDeleted = true
+                guard let vc = navigationController?.topViewController as? DiaryListViewController else {
+                    return
+                }
+//                vc.isDeleted = true
+//                vc.asd = currentDate
                 self.navigationController?.popViewController(animated: true)
-                CoreDataManager.shared.delete(self.diary!)
             }
 
             alert.addAction(cancelAction)
@@ -279,8 +292,6 @@ extension DiaryContentsViewController: UITextViewDelegate {
     
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         
-        print(#function)
-        
         // 비교용 폰트
         let title1Font = UIFont.preferredFont(forTextStyle: .title1)
         let bodyFont = UIFont.preferredFont(forTextStyle: .body)
@@ -314,7 +325,6 @@ extension DiaryContentsViewController: UITextViewDelegate {
         
         // 백스페이스를 누른 경우
         if text == "" {
-            print("location: \(cursorLocation), \(textView.selectedRange.length), length: \(textLength)")
             
             // 텍스트 길이가 현재 커서의 위치보다 큰 경우 (== 커서가 문자열 "안쪽"에 있음)
             // 커서의 길이가 0인 경우 (== 범위가 아닌, 한 지점을 선택함)
@@ -329,8 +339,6 @@ extension DiaryContentsViewController: UITextViewDelegate {
                 
                 // 폰트 사이즈가 다른 경우 (== 폰트가 다름)
                 if cursorsLeftFont.pointSize != cursorsRightFont.pointSize {
-                    
-                    print("좌우 다름!")
                     
                     // 현재의 커서 위치 저장
                     self.textViewCurrentSelectedTextRange = textView.selectedTextRange
@@ -437,3 +445,4 @@ extension DiaryContentsViewController: UITextViewDelegate {
         }
     }
 }
+
