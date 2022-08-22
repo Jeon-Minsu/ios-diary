@@ -32,6 +32,7 @@ final class DiaryListView: UIView {
         tableView = UITableView(frame: bounds,
                                 style: .plain)
         
+        tableView.keyboardDismissMode = .interactive
         addSubview(tableView)
     }
 

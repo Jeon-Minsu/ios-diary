@@ -28,8 +28,15 @@ final class DiaryListViewController: UIViewController {
     private var dataSource: UITableViewDiffableDataSource<Section, DiaryData>?
     private var snapShot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
     
-    var asd: Date = Date()
-    var isDeleted: Bool = false
+//    var asd: Date = Date()
+//    var isDeleted: Bool = false
+    
+    var isFiltering: Bool {
+        let searchController = self.navigationItem.searchController
+        let isActive = searchController?.isActive ?? false
+        let isSearchBarHasText = searchController?.searchBar.text?.isEmpty == false
+        return isActive && isSearchBarHasText
+    }
     
     // MARK: - Life Cycle
     
@@ -48,6 +55,14 @@ final class DiaryListViewController: UIViewController {
         
         configureDelgate()
         
+        
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.placeholder = "메모 검색"
+        searchController.hidesNavigationBarDuringPresentation = false
+        self.navigationItem.searchController = searchController
+        self.navigationItem.hidesSearchBarWhenScrolling = false
+        
 //        guard let diary = fetchResultsController.sections?[0].objects as? [Diary] else {
 //            return
 //        }
@@ -63,9 +78,9 @@ final class DiaryListViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if isDeleted {
-            CoreDataManager.shared.delete(createdAt: asd)
-        }
+//        if isDeleted {
+//            CoreDataManager.shared.delete(createdAt: asd)
+//        }
     }
     
 //    override func viewWillAppear(_ animated: Bool) {
@@ -324,5 +339,40 @@ extension DiaryListViewController: UITableViewDataSource {
         let swipeActionCongifuration = UISwipeActionsConfiguration(actions: [deleteAction, shareAction])
         swipeActionCongifuration.performsFirstActionWithFullSwipe = false
         return swipeActionCongifuration
+    }
+}
+
+extension DiaryListViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        
+//        snapShot = NSDiffableDataSourceSnapshot<Section, DiaryData>()
+        snapShot.deleteAllItems()
+        snapShot.appendSections([.main])
+        
+        if isFiltering {
+            guard let searchBarText = searchController.searchBar.text else { return }
+            
+            let fetchRequest: NSFetchRequest<Diary> = NSFetchRequest(entityName: "Diary")
+            fetchRequest.predicate = NSPredicate(format: "title CONTAINS %@", searchBarText)
+            
+            let fetchedData = CoreDataManager.shared.fetch(request: fetchRequest)
+            
+            
+            var diaryDateArray: [DiaryData] = []
+            fetchedData.forEach {
+                diaryDateArray.append(DiaryData(title: $0.title!, body: $0.body!, createdAt: $0.createdAt!))
+            }
+            
+            snapShot.appendItems(diaryDateArray)
+            diaryDateArray.forEach {
+                print($0.title)
+                print($0.createdAt)
+            }
+            print("#########################")
+            
+            dataSource?.apply(snapShot)
+        } else {
+            loadSavedData()
+        }
     }
 }
