@@ -129,6 +129,19 @@ class CoreDataManager {
             print(error)
         }
     }
+    
+    func fetchDiary(createdAt: Date) -> Diary? {
+        
+        let request = NSFetchRequest<Diary>(entityName: "Diary")
+        request.predicate = NSPredicate(format: "createdAt = %@", createdAt as NSDate)
+        
+        
+        guard let fetchedData = try? persistentContainer.viewContext.fetch(request).first else {
+            return nil
+        }
+        return fetchedData
+
+    }
 
 }
 

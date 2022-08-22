@@ -11,7 +11,8 @@ import CoreData
 final class DiaryContentsViewController: UIViewController {
     
     // MARK: - Properties
-    
+        
+    var currentDate: Date?
     var isEditingMemo: Bool = false
     var diary: Diary?
     var diaryView: DiaryListView?
@@ -33,8 +34,14 @@ final class DiaryContentsViewController: UIViewController {
 
         configureNavigationItems()
         configureNotificationCenter()
-        diaryContentView.textView.delegate = self
         setObserver()
+        diaryContentView.textView.delegate = self
+
+        guard let diary = diary else {
+            currentDate = Date()
+            return
+        }
+        currentDate = diary.createdAt
     }
     
     private func setObserver() {
@@ -62,14 +69,12 @@ final class DiaryContentsViewController: UIViewController {
         }
         
         
-        if isEditingMemo {
-            guard let createdAt = diary?.createdAt else {
-                return
-            }
-            CoreDataManager.shared.update(title: title, body: body, createdAt: createdAt)
-        } else {
-            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: Date())
+        guard let _ = CoreDataManager.shared.fetchDiary(createdAt: currentDate!) else {
+            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: currentDate!)
+            return
         }
+        
+        CoreDataManager.shared.update(title: title, body: body, createdAt: currentDate!)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -81,7 +86,9 @@ final class DiaryContentsViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        diaryContentView.textView.becomeFirstResponder()
+        if isEditingMemo == false {
+            diaryContentView.textView.becomeFirstResponder()
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -90,8 +97,6 @@ final class DiaryContentsViewController: UIViewController {
         guard !diaryContentView.textView.text.isEmpty else {
             return
         }
-        
-        
         
         let fullText = diaryContentView.textView.text ?? ""
         
@@ -108,15 +113,12 @@ final class DiaryContentsViewController: UIViewController {
             body = (fullText as NSString).substring(with: bodyRange)
         }
         
-        
-        if isEditingMemo {
-            guard let createdAt = diary?.createdAt else {
-                return
-            }
-            CoreDataManager.shared.update(title: title, body: body, createdAt: createdAt)
-        } else {
-            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: Date())
+        guard let _ = CoreDataManager.shared.fetchDiary(createdAt: currentDate!) else {
+            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: currentDate!)
+            return
         }
+        
+        CoreDataManager.shared.update(title: title, body: body, createdAt: currentDate!)
         
         
     }
@@ -140,10 +142,23 @@ final class DiaryContentsViewController: UIViewController {
                                             preferredStyle: .actionSheet)
 
         let shareAction = UIAlertAction(title: "Share...",
-                                        style: .default) { _ in
+                                        style: .default) { [self] _ in
 
-            let items = [UIImage(systemName: "pencil") as Any, self.diaryContentView.textView.text!]
-            let activityViewController = UIActivityViewController(activityItems: items, applicationActivities: nil)
+
+//                //Generate the screenshot
+//            UIGraphicsBeginImageContext(self.view.frame.size)
+//            self.view.layer.render(in: UIGraphicsGetCurrentContext()!)
+//            let image = UIGraphicsGetImageFromCurrentImageContext()
+//            UIGraphicsEndImageContext()
+
+//            var postImage = UIImage(named: "\(image)")
+
+//            var postImage = UIImage(systemName: "circle")
+
+            let button = UIButton()
+            button.setTitle("options", for: .normal)
+            
+            let activityViewController = UIActivityViewController(activityItems: [button, self.diaryContentView.textView.text], applicationActivities: nil)
             self.present(activityViewController, animated: true)
         }
 
@@ -227,32 +242,34 @@ final class DiaryContentsViewController: UIViewController {
         
         diaryContentView.textView.contentInset = contentInset
         diaryContentView.textView.scrollIndicatorInsets = contentInset
+        
+        guard !diaryContentView.textView.text.isEmpty else {
+            return
+        }
+        
+        let fullText = diaryContentView.textView.text ?? ""
+        
+        var title: String = fullText
+        var body: String = ""
+        
+        if fullText.contains("\n") {
+            let lineBreakIndex = fullText.firstIndex(of: "\n")
+            let firstLineBreakIndexInt = lineBreakIndex!.utf16Offset(in: fullText)
+            let titleRange = NSMakeRange(0, firstLineBreakIndexInt)
+            title = (fullText as NSString).substring(with: titleRange)
+            
+            let bodyRange = NSMakeRange(firstLineBreakIndexInt + 1, fullText.count - title.count - 1)
+            body = (fullText as NSString).substring(with: bodyRange)
+        }
+        
+        guard let _ = CoreDataManager.shared.fetchDiary(createdAt: currentDate!) else {
+            CoreDataManager.shared.saveDiary(title: title, body: body, createdAt: currentDate!)
+            return
+        }
+        
+        CoreDataManager.shared.update(title: title, body: body, createdAt: currentDate!)
     }
 }
-
-//extension DiaryContentsViewController: NSFetchedResultsControllerDelegate {
-//    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-//        if type == .insert {
-//            DispatchQueue.main.async {
-////                chatcollectionView.insertItems(at: [newIndexPath!])
-////                self.diaryView?.tableView.insertRows(at: [newIndexPath!], with: .fade)
-//
-//                guard let newDiaryData = anObject as? Diary else {
-//                    return
-//                }
-//
-//                let diary = DiaryData(title: newDiaryData.title!, body: newDiaryData.body!, createdAt: newDiaryData.createdAt!)
-//
-//
-////                snapShot.appendItems([diary])
-////                dataSource?.apply(snapShot)
-//            }
-//
-//            delegate?.sendUpdated()
-//
-//        }
-//    }
-//}
 
 protocol SendUpdateProtocol: AnyObject {
     func sendUpdated()
@@ -406,8 +423,6 @@ extension DiaryContentsViewController: UITextViewDelegate {
         
         return true
     }
-    
-    
     
     func textViewDidChangeSelection(_ textView: UITextView) {
         
