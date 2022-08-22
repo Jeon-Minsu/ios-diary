@@ -29,13 +29,8 @@ class CoreDataManager {
         diary.setValue(data.title, forKey: "title")
         diary.setValue(data.body, forKey: "body")
         diary.setValue(data.createdAt, forKey: "createdAt")
-        
-        do {
-            try persistentContainer.viewContext.save()
-            appDelegate.saveContext()
-        } catch {
-            print(error.localizedDescription)
-        }
+
+        appDelegate.saveContext()
     }
     
     func saveDiary(title: String, body: String, createdAt: Date) {
@@ -44,13 +39,8 @@ class CoreDataManager {
         diary.setValue(title, forKey: "title")
         diary.setValue(body, forKey: "body")
         diary.setValue(createdAt, forKey: "createdAt")
-        
-        do {
-            try persistentContainer.viewContext.save()
-            appDelegate.saveContext()
-        } catch {
-            print(error.localizedDescription)
-        }
+
+        appDelegate.saveContext()
     }
     
     func fetch() -> [Diary] {
